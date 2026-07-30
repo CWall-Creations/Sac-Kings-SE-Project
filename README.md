@@ -139,7 +139,7 @@ Two more the view surfaces:
   against 1.12 for all other passed threes. The classic action is not producing
   better threes here.
 
-### 5. What to do about it
+### 5. Insights on how to better improve the overall team based on the data collected
 
 ![Team insights](docs/screenshots/06-insights-team.jpg)
 
@@ -207,7 +207,7 @@ Selecting a player does something slightly different in each view, on purpose:
 | Selection vs making | **Emphasises** them; the others stay for context |
 | Context breakdown | Filters to them and draws the team as a benchmark tick |
 | Effect of the last pass | Filters to the passes that fed *his* attempts |
-| What to do about it | Switches from roster-level tactics to that player's role and levers |
+| Insights | Switches from roster-level tactics to that player's role and levers |
 
 The scatter is the exception because filtering a twelve-player comparison down to
 one player leaves nothing to compare — and would strip the baseline of the players

@@ -378,12 +378,12 @@ function DashboardContent({ dataset }: { dataset: ShotDataset }) {
             </Card>
           </ViewErrorBoundary>
 
-          <ViewErrorBoundary name="What to do about it">
+          <ViewErrorBoundary name="Insights">
             <Card
               title={
                 focusedPlayerName
                   ? `${focusedPlayerName} — how he could better serve the offence`
-                  : "What to do about it"
+                  : "Insights on how to better improve the overall team based on the data collected"
               }
               description={
                 focusedPlayerName ? (
