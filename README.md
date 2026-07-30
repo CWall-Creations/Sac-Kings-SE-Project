@@ -71,7 +71,7 @@ Measured on this dataset, at a 3 ft hex radius:
 The bottom row is an ordinary UI state. Four trustworthy cells out of sixty-one is
 not a chart.
 
-### 2. Good shots, or shots made well?
+### 2. How can we decipher if these shot attempts are high-quality looks or just very skilled, tough buckets?
 
 ![Selection vs making](docs/screenshots/03-selection-vs-making.jpg)
 

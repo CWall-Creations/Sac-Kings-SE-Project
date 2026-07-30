@@ -321,7 +321,7 @@ function DashboardContent({ dataset }: { dataset: ShotDataset }) {
 
           <ViewErrorBoundary name="Selection vs making">
             <Card
-              title="Good shots, or shots made well?"
+              title="How can we decipher if these shot attempts are high-quality looks or just very skilled, tough buckets?"
               description={
                 <>
                   Horizontal position is the average quality of the shots a player
