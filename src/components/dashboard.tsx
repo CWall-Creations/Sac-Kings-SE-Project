@@ -239,7 +239,7 @@ function DashboardContent({ dataset }: { dataset: ShotDataset }) {
               title={
                 focusedPlayerName
                   ? `Where ${focusedPlayerName} shoots, and how it compares`
-                  : "Where the shots come from, and what they are worth"
+                  : "Checking where shots are coming from and what they are worth"
               }
               description={
                 <>

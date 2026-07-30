@@ -45,7 +45,7 @@ environment variables or server runtime to configure.
 
 ## What it shows
 
-### 1. Where the shots come from, and what they are worth
+### 1. Checking where shots are coming from and what they are worth
 
 ![Shot map](docs/screenshots/02-shot-map.jpg)
 
