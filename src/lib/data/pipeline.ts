@@ -90,7 +90,7 @@ export function buildDataset(shots: Shot[]): ShotDataset {
 }
 
 /** Player list for the filter controls, ordered by volume. */
-export function summarisePlayers(shots: Shot[]): PlayerSummary[] {
+function summarisePlayers(shots: Shot[]): PlayerSummary[] {
   const byId = new Map<string, PlayerSummary>();
 
   for (const shot of shots) {

@@ -3,7 +3,6 @@ import { makeShot } from "@/lib/test/factories";
 import {
   EMPTY_SPLIT,
   groupBy,
-  hasEnoughAttempts,
   pointsPerShotStandardError,
   summarise,
   summariseBy,
@@ -86,13 +85,6 @@ describe("summariseBy", () => {
 
     expect(splits.get("A")?.fieldGoalPct).toBeCloseTo(0.5);
     expect(splits.get("B")?.fieldGoalPct).toBeCloseTo(1);
-  });
-});
-
-describe("hasEnoughAttempts", () => {
-  it("draws the line at 25 attempts", () => {
-    expect(hasEnoughAttempts({ ...EMPTY_SPLIT, attempts: 24 })).toBe(false);
-    expect(hasEnoughAttempts({ ...EMPTY_SPLIT, attempts: 25 })).toBe(true);
   });
 });
 

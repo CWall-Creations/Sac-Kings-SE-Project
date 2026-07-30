@@ -4,7 +4,6 @@ import {
   EMPTY_FILTERS,
   activeFilterCount,
   applyFilters,
-  hasActiveFilters,
   selectedPlayerId,
 } from "./filters";
 
@@ -79,17 +78,6 @@ describe("applyFilters", () => {
     const copy = [...input];
     applyFilters(input, { ...EMPTY_FILTERS, playerIds: ["a"] });
     expect(input).toEqual(copy);
-  });
-});
-
-describe("hasActiveFilters", () => {
-  it("is false for the default state", () => {
-    expect(hasActiveFilters(EMPTY_FILTERS)).toBe(false);
-  });
-
-  it("is true once any dimension is constrained", () => {
-    expect(hasActiveFilters({ ...EMPTY_FILTERS, playerIds: ["a"] })).toBe(true);
-    expect(hasActiveFilters({ ...EMPTY_FILTERS, clutchOnly: true })).toBe(true);
   });
 });
 

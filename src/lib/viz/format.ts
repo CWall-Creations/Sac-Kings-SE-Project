@@ -52,8 +52,3 @@ export function formatSignedPoints(value: number): string {
   const sign = rounded > 0 ? "+" : rounded < 0 ? "−" : "";
   return `${sign}${Math.abs(rounded)}`;
 }
-
-/** Feet, e.g. "23.8 ft". */
-export function formatFeet(value: number): string {
-  return `${value.toFixed(1)} ft`;
-}

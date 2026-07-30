@@ -30,7 +30,7 @@ setup step. Node 20+ (developed on 22).
 |---|---|
 | `npm run dev` | Regenerate data, then start the dev server |
 | `npm run build` | Regenerate data, then build (fully static output) |
-| `npm test` | 193 unit and integration tests |
+| `npm test` | 189 unit and integration tests |
 | `npm run data` | Run the ETL only: `data/raw/shots.csv` → `public/data/shots.json` |
 | `npm run lint` | ESLint |
 
@@ -318,7 +318,7 @@ Two readings worth pulling out:
 | Styling | **Tailwind 4** | Design tokens as CSS custom properties; no component library needed at this size |
 | Charts | **Hand-rolled SVG** + `d3-scale` for scales only | No library draws a basketball court, and once the court is hand-built the scatter and bars are cheaper to hand-build than to bend a library into shape |
 | Validation | **Zod** | One schema that defines what "clean" means, enforced at build time |
-| Tests | **Vitest** | 193 tests; the analytics layer is pure functions, so it needs no DOM |
+| Tests | **Vitest** | 189 tests; the analytics layer is pure functions, so it needs no DOM |
 | Data | Build-time ETL → static JSON | See below |
 
 **Deliberately not used:** no state library (the URL is the state), no charting
@@ -371,6 +371,11 @@ JavaScript bundle; it compresses to ~456 KB over the wire and the browser caches
 at x = −47, but the hoop sits 5.25 ft inside it. Anchoring to the baseline would
 inflate every shot distance by more than five feet and misclassify entire zones.
 Sanity check: the median layup in the data lands at (−40.4, −0.2).
+
+![Coordinate system](docs/coordinate_diagram.png)
+
+*The coordinate system as supplied. Note that it marks the baselines, not the rims
+— which is exactly the trap above.*
 
 **Points per shot excludes free throws, and this understates rim pressure.** The
 dataset has no free-throw data, but 875 attempts (9.9%) drew a shooting foul and
@@ -528,7 +533,7 @@ and distance as model features, and a proper hierarchical model rather than
 
 ## Testing
 
-193 tests. The ones that carry weight:
+189 tests. The ones that carry weight:
 
 - **A 2,448-point grid sweep** cross-checking the zone classifier against the
   shot-value predicate — two independent code paths that must agree everywhere.

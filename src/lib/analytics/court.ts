@@ -108,8 +108,3 @@ export function shotValue(point: CourtPoint): 2 | 3 {
 export function isBackcourtShot(point: CourtPoint): boolean {
   return point.x > 0;
 }
-
-/** True if the shot was released inside the painted lane. */
-export function isInLane(point: CourtPoint): boolean {
-  return Math.abs(point.y) <= LANE_HALF_WIDTH && point.x <= FREE_THROW_LINE_X;
-}

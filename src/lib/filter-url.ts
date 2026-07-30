@@ -8,7 +8,7 @@ import {
   type ShotClockBucket,
   type ShotType,
 } from "@/lib/data/types";
-import { EMPTY_FILTERS, type ShotFilters } from "./filters";
+import type { ShotFilters } from "./filters";
 
 /**
  * Filter state <-> URL query string.
@@ -76,14 +76,6 @@ export function filtersToQueryString(filters: ShotFilters): string {
   if (filters.assistedOnly) params.set(PARAM.pass, "1");
 
   return params.toString();
-}
-
-/**
- * Whether a parsed filter set is the default. Used to decide between `replace`
- * and a plain path, so clearing filters does not leave `?` dangling.
- */
-export function isDefaultFilters(filters: ShotFilters): boolean {
-  return filtersToQueryString(filters) === filtersToQueryString(EMPTY_FILTERS);
 }
 
 /**

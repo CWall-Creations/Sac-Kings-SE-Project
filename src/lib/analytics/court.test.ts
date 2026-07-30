@@ -4,7 +4,6 @@ import {
   RIM,
   distanceFromRim,
   isBackcourtShot,
-  isInLane,
   isThreePointAttempt,
   shotValue,
 } from "./court";
@@ -76,9 +75,4 @@ describe("court predicates", () => {
     expect(isBackcourtShot({ x: -5, y: 0 })).toBe(false);
   });
 
-  it("recognises shots inside the painted lane", () => {
-    expect(isInLane({ x: -40, y: 3 })).toBe(true);
-    expect(isInLane({ x: -40, y: 12 })).toBe(false); // outside the lane
-    expect(isInLane({ x: -20, y: 0 })).toBe(false); // beyond the free-throw line
-  });
 });

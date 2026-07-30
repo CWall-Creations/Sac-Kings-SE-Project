@@ -148,10 +148,6 @@ export function summariseBy<K>(
  */
 export const MIN_ATTEMPTS_FOR_CONFIDENCE = 25;
 
-export function hasEnoughAttempts(split: ShootingSplit): boolean {
-  return split.attempts >= MIN_ATTEMPTS_FOR_CONFIDENCE;
-}
-
 /**
  * Minimum attempts before a *season-long player rating* is presented without a
  * caveat. Deliberately far above `MIN_ATTEMPTS_FOR_CONFIDENCE`: 25 attempts is

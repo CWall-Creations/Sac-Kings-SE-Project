@@ -46,16 +46,3 @@ export function isClutchShot(period: number, secondsRemaining: number): boolean 
     secondsRemaining <= CLUTCH_MAX_SECONDS_REMAINING
   );
 }
-
-/**
- * How long the shooter held the ball, in seconds, from the clocks either side of
- * the release. Returns null when the period clock stopped or rolled over between
- * the two readings, which makes the difference meaningless.
- */
-export function releaseToRimSeconds(
-  startGameClock: number,
-  endGameClock: number,
-): number | null {
-  const elapsed = startGameClock - endGameClock;
-  return elapsed >= 0 && elapsed < 10 ? elapsed : null;
-}

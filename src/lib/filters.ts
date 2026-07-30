@@ -81,19 +81,6 @@ export function applyFilters(
   });
 }
 
-/** Whether any constraint is active, for the "clear filters" affordance. */
-export function hasActiveFilters(filters: ShotFilters): boolean {
-  return (
-    filters.playerIds.length > 0 ||
-    filters.contestLevels.length > 0 ||
-    filters.shotClockBuckets.length > 0 ||
-    filters.dribbleBuckets.length > 0 ||
-    filters.shotTypes.length > 0 ||
-    filters.clutchOnly ||
-    filters.assistedOnly
-  );
-}
-
 /** Number of active constraints, for a badge on a collapsed filter panel. */
 export function activeFilterCount(filters: ShotFilters): number {
   return (
