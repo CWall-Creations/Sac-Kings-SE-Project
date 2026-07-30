@@ -9,12 +9,13 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "data": "tsx scripts/build-data.ts"
+    "data": "tsx scripts/build-data.ts",
+    "prebuild": "npm run data",
+    "predev": "npm run data"
   },
   "dependencies": {
     "d3-scale": "^4.0.2",
     "next": "16.2.12",
-    "nuqs": "^2.9.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "recharts": "^3.10.1",
