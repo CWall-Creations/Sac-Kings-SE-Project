@@ -494,6 +494,137 @@ export — and force-fixing them breaks the toolchain, so they are left in place
 
 ---
 
+## The biggest thing missing: why the shot was taken
+
+Everything in this dashboard describes **what** a shot was — where it came from, how
+contested it was, how many dribbles preceded it. Nothing in it describes **why the
+shot happened**. That is the single largest gap in the analysis, and closing it would
+change conclusions rather than merely refine them.
+
+Every shot in an NBA game is either something the offence intended or something it
+settled for. A designed pin-down for your best shooter and a bail-out with three
+seconds left can produce *identical* rows in this dataset: same zone, same contest
+level, same dribble count. The model treats them as the same shot. A coach never
+would.
+
+### What the data would look like
+
+Four fields would carry most of the value:
+
+| Field | Example values | What it answers |
+|---|---|---|
+| `possession_type` | set play, transition, secondary break, scramble, ATO, SLOB/BLOB, offensive rebound | Was there a plan at all? |
+| `play_call` | Horns flare, Spain PnR, Floppy, Zoom, Iso, post split | Which plan? |
+| `option_rank` | 1st read, 2nd read, counter, improvised | Was this the plan, or what was left of it? |
+| `action_completed` | did the entry pass / screen / cut happen as designed | Did the plan actually run? |
+
+### Why it changes the model rather than decorating it
+
+The expected-points baseline currently conditions on zone and contest level. Both are
+*descriptions of the shot*. Neither is a description of **intent**, and intent is what
+separates a player's decision from a coach's.
+
+That matters because of where the residual goes. Today the arithmetic is:
+
+```
+actual = shot selection + shot making
+```
+
+Anything the model cannot see is silently absorbed into "shot making", which is why
+that term should really be read as *shot making plus everything we failed to measure*.
+With play context the decomposition becomes:
+
+```
+actual = play design + execution + shot selection + shot making
+```
+
+— and the four terms have four different owners. Play design belongs to the coaching
+staff. Execution belongs to the group running it. Selection belongs to the shooter's
+judgment. Only the last is what most people mean when they say a player is a good or
+bad shooter.
+
+Concretely: this dashboard currently reports that Player D cost roughly 126 points
+against expectation, 83% of it shot making. It also reports, separately, that 26% of
+his attempts come with under seven seconds on the clock against a team average of 19%.
+Those two findings are almost certainly related, and the model cannot connect them. If
+those late attempts are third reads on possessions that already broke down, the honest
+statement is not "Player D shoots badly" — it is "this offence generates a few hundred
+dead possessions a season and hands them to Player D." Those call for completely
+different interventions, and the current data cannot distinguish them.
+
+### What it would unlock
+
+- **An option-rank efficiency curve.** Points per shot for 1st reads, 2nd reads,
+  counters, and scrambles. It will decline; the *slope* is the interesting part,
+  because it measures how gracefully the offence degrades when the first look is
+  taken away. A flat curve means deep, layered actions. A cliff means one-read plays.
+- **First-option rate by player.** The dashboard already flags that Player C is the
+  roster's most efficient scorer but only third in attempts. Whether he is a designed
+  first option on 40% of sets or 10% turns that from an observation into an
+  instruction — and tells you whether the fix is play-calling or personnel.
+- **Play-call efficiency, using the machinery already here.** The selection-versus-
+  making split applies one level up: which called actions are run often but produce
+  little, and which are efficient but underused. Exactly the corner-three argument,
+  aimed at the playbook instead of the shot chart.
+- **Where the good shots actually come from.** The pass-origin view shows that corner
+  threes fed from the mid-range return 1.33 against 0.99 fed from the top. It cannot
+  say *which play* generates that kick-out. Play data closes that loop and turns the
+  finding into something a staff can call.
+- **ATO efficiency** — points per possession out of timeouts, one of the few direct,
+  isolatable measures of coaching-staff contribution, and something front offices
+  track for exactly that reason.
+- **A much stronger role classifier.** Roles are currently inferred from shot profile
+  because the extract has no positions. "First option on 40% of half-court sets" is a
+  far better description of a player's job than anything derivable from where he
+  shoots from.
+
+It also slots into structure the app already has. The insights layer distinguishes a
+`concern` (something the player controls) from an `assignment` (something the coach
+controls), and that distinction is presently supported by one proxy — late-clock
+share. Play context is what would let that category carry real weight.
+
+### What can be seen today, and why it is not enough
+
+A crude proxy is available from the existing columns. Call a shot **structured** if it
+came off a pass, was released with at most one dribble inside 2.5 seconds, and came
+before the clock got late; call it **improvised** if the shooter took three or more
+dribbles or received no pass, with under seven seconds left:
+
+| | Attempts | Share | PPS | Heavily contested |
+|---|---|---|---|---|
+| Structured proxy | 3,769 | 43% | **1.17** | 50% |
+| Improvised proxy | 767 | 9% | **0.78** | 81% |
+| Everything else | 4,280 | 49% | 0.97 | 73% |
+
+A 0.39 gap, and the per-player ordering is suggestive: Player D has the roster's
+highest improvised share (16%) and its lowest points per shot (0.88), while Players G,
+B and A — the most structured shot diets on the team at 70%, 63% and 60% — all sit at
+or above average.
+
+**This proxy cannot settle the question, and it is important to say why.** It is built
+from dribble counts and shot-clock time — the same fields the efficiency model already
+uses — so it is not independent evidence. Worse, it cannot distinguish the two
+explanations that matter: a player who improvises badly and a player who is handed
+possessions that have already collapsed produce identical rows. Separating them
+requires knowing what the offence was *trying* to do, which is exactly the field this
+dataset lacks.
+
+### Where the data comes from, and what it costs
+
+Play-type and option-rank tagging is available from Synergy Sports and from tracking
+providers such as Second Spectrum, and most staffs already chart their own play calls
+internally. The honest caveats:
+
+- **Option rank is partly subjective.** Coaches disagree about whether a read was the
+  second option or improvisation, so the field carries annotator noise that the
+  location fields do not.
+- **Taxonomies differ by provider**, so play labels are not portable between sources
+  without a mapping layer.
+- **Cells thin out fast.** Conditioning on zone x contest x option rank multiplies the
+  cell count, and this dataset's thinnest cells are already small. The shrinkage
+  already built here stops being a nicety and becomes load-bearing — or the model
+  moves to a properly hierarchical one.
+
 ## If the dataset were much larger
 
 The current design holds to roughly 100k shots. Past that, in order:
@@ -554,13 +685,16 @@ and distance as model features, and a proper hierarchical model rather than
 
 Ordered by value per hour:
 
-1. **Free-throw-adjusted efficiency** as a toggle, if free-throw data can be joined.
-   The largest single improvement available.
-2. **Passer identity**, if it can be joined from another source. The pass-origin
+1. **Play and possession context** — see [the section above](#the-biggest-thing-missing-why-the-shot-was-taken).
+   The largest single improvement available, and the only one that would change
+   conclusions rather than sharpen them.
+2. **Free-throw-adjusted efficiency** as a toggle, if free-throw data can be joined.
+   The largest improvement available from data of the kind already here.
+3. **Passer identity**, if it can be joined from another source. The pass-origin
    view shows *where* the last pass came from; with identities it would show *who*
    creates them, which is the question a front office actually asks.
-3. **Game-level trend** — 160 game dates are in the data; nothing currently uses time.
+4. **Game-level trend** — 160 game dates are in the data; nothing currently uses time.
    Cold streaks and in-season changes in shot diet are invisible today.
-4. **Lineup and opponent context**, neither of which is in this extract.
-5. **A defended-shot model** using contest level plus distance, rather than treating
+5. **Lineup and opponent context**, neither of which is in this extract.
+6. **A defended-shot model** using contest level plus distance, rather than treating
    contest level as three discrete buckets.
