@@ -139,7 +139,7 @@ Two more the view surfaces:
   against 1.12 for all other passed threes. The classic action is not producing
   better threes here.
 
-### 5. Insights on how to better improve the overall team based on the data collected
+### 5. Insights on how to improve the overall team based on the data collected
 
 ![Team insights](docs/screenshots/06-insights-team.jpg)
 

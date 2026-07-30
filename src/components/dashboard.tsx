@@ -383,7 +383,7 @@ function DashboardContent({ dataset }: { dataset: ShotDataset }) {
               title={
                 focusedPlayerName
                   ? `${focusedPlayerName} — how he could better serve the offence`
-                  : "Insights on how to better improve the overall team based on the data collected"
+                  : "Insights on how to improve the overall team based on the data collected"
               }
               description={
                 focusedPlayerName ? (
