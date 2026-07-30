@@ -284,14 +284,21 @@ function DashboardContent({ dataset }: { dataset: ShotDataset }) {
                 </>
               }
               actions={
-                <label className="flex items-center gap-2 text-xs text-ink-secondary">
-                  <span className="text-ink-muted">Trace back from</span>
+                // The one control that changes what this view shows, so it wears
+                // primary ink and a visible border rather than the recessive
+                // treatment the rest of the chrome uses. Uppercasing is done in
+                // CSS, not the source text, so screen readers still announce it
+                // as words.
+                <label className="flex items-center gap-2.5 text-xs">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-ink">
+                    Last pass location
+                  </span>
                   <select
                     value={passOriginZone}
                     onChange={(event) =>
                       setPassOriginZone(event.target.value as CourtZone)
                     }
-                    className="rounded border border-hairline bg-surface px-2 py-1 text-xs text-ink focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-accent"
+                    className="rounded border border-axis bg-surface px-2.5 py-1.5 text-xs font-medium text-ink hover:border-ink-muted focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-accent"
                   >
                     {COURT_ZONES.map((zone) => (
                       <option key={zone} value={zone}>
