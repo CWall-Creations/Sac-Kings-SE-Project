@@ -102,7 +102,7 @@ per-situation rather than a single season number:
 
 ![Context with a player selected](docs/screenshots/05-context-player.jpg)
 
-### 4. Where the good shots are created
+### 4. How is the last pass before the shot affecting shot quality?
 
 ![Pass origins](docs/screenshots/08-pass-origins.jpg)
 
@@ -206,7 +206,7 @@ Selecting a player does something slightly different in each view, on purpose:
 | Shot map | Filters to them, and switches the colour reference from "an average attempt" to "the team in this zone" |
 | Selection vs making | **Emphasises** them; the others stay for context |
 | Context breakdown | Filters to them and draws the team as a benchmark tick |
-| Where good shots are created | Filters to the passes that fed *his* attempts |
+| Effect of the last pass | Filters to the passes that fed *his* attempts |
 | What to do about it | Switches from roster-level tactics to that player's role and levers |
 
 The scatter is the exception because filtering a twelve-player comparison down to
@@ -557,7 +557,7 @@ Ordered by value per hour:
 1. **Free-throw-adjusted efficiency** as a toggle, if free-throw data can be joined.
    The largest single improvement available.
 2. **Passer identity**, if it can be joined from another source. The pass-origin
-   view shows *where* good shots are created; with identities it would show *who*
+   view shows *where* the last pass came from; with identities it would show *who*
    creates them, which is the question a front office actually asks.
 3. **Game-level trend** — 160 game dates are in the data; nothing currently uses time.
    Cold streaks and in-season changes in shot diet are invisible today.

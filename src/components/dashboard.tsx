@@ -273,7 +273,7 @@ function DashboardContent({ dataset }: { dataset: ShotDataset }) {
 
           <ViewErrorBoundary name="Pass origins">
             <Card
-              title="Where the good ones are created"
+              title="How is the last pass before the shot affecting shot quality?"
               description={
                 <>
                   The court read backwards: each hex is a{" "}
