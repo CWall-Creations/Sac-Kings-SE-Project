@@ -77,8 +77,47 @@ export function nearestHexCenter(
   return best!;
 }
 
+/** A hex bin holding whatever was binned into it. */
+export interface Bin<T> {
+  column: number;
+  row: number;
+  /** Bin centre, in court feet. */
+  x: number;
+  y: number;
+  items: T[];
+}
+
 /**
- * Bin shots into hexes, dropping empty cells.
+ * Bin anything positioned on the court, dropping empty cells.
+ *
+ * Generic over the item and its position because two views need it with
+ * different geometry: the shot map bins shots by where they were released, and
+ * the pass-origin map bins those same shots by where the *pass* came from.
+ */
+export function binPoints<T>(
+  items: readonly T[],
+  positionOf: (item: T) => CourtPoint,
+  radius: number = DEFAULT_HEX_RADIUS_FEET,
+): Bin<T>[] {
+  const bins = new Map<string, Bin<T>>();
+
+  for (const item of items) {
+    const centre = nearestHexCenter(positionOf(item), radius);
+    const key = `${centre.column},${centre.row}`;
+    const existing = bins.get(key);
+
+    if (existing) {
+      existing.items.push(item);
+    } else {
+      bins.set(key, { ...centre, items: [item] });
+    }
+  }
+
+  return [...bins.values()];
+}
+
+/**
+ * Bin shots by release point.
  *
  * Each bin's zone is taken from the zone of the shots in it (by plurality) so a
  * bin straddling the three-point line is coloured by where its shots actually
@@ -88,33 +127,25 @@ export function binShots(
   shots: readonly Shot[],
   radius: number = DEFAULT_HEX_RADIUS_FEET,
 ): ShotHex[] {
-  const bins = new Map<string, ShotHex & { zoneCounts: Map<CourtZone, number> }>();
+  return binPoints(shots, (shot) => shot, radius).map((bin) => {
+    const zoneCounts = new Map<CourtZone, number>();
+    let makes = 0;
 
-  for (const shot of shots) {
-    const centre = nearestHexCenter(shot, radius);
-    const key = `${centre.column},${centre.row}`;
-    let bin = bins.get(key);
-
-    if (!bin) {
-      bin = {
-        ...centre,
-        attempts: 0,
-        makes: 0,
-        zone: shot.zone,
-        zoneCounts: new Map(),
-      };
-      bins.set(key, bin);
+    for (const shot of bin.items) {
+      if (shot.made) makes += 1;
+      zoneCounts.set(shot.zone, (zoneCounts.get(shot.zone) ?? 0) + 1);
     }
 
-    bin.attempts += 1;
-    if (shot.made) bin.makes += 1;
-    bin.zoneCounts.set(shot.zone, (bin.zoneCounts.get(shot.zone) ?? 0) + 1);
-  }
-
-  return [...bins.values()].map(({ zoneCounts, ...bin }) => ({
-    ...bin,
-    zone: pluralityZone(zoneCounts, bin.zone),
-  }));
+    return {
+      column: bin.column,
+      row: bin.row,
+      x: bin.x,
+      y: bin.y,
+      attempts: bin.items.length,
+      makes,
+      zone: pluralityZone(zoneCounts, bin.items[0].zone),
+    };
+  });
 }
 
 function pluralityZone(

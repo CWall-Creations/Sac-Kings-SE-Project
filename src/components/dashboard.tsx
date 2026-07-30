@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ContextBreakdownGrid } from "@/components/charts/context-breakdown";
 import { InsightList, RoleBadge } from "@/components/charts/insights-panel";
 import { PlayerTable } from "@/components/charts/player-table";
@@ -9,6 +9,8 @@ import {
   SelectionMakingScatter,
 } from "@/components/charts/selection-making-scatter";
 import { CourtLegend } from "@/components/court/court-legend";
+import { PassOriginMap } from "@/components/court/pass-origin-map";
+import { PassOriginTable } from "@/components/court/pass-origin-table";
 import { ShotMap } from "@/components/court/shot-map";
 import { ZoneTable } from "@/components/court/zone-table";
 import { FilterBar } from "@/components/filters/filter-bar";
@@ -22,6 +24,8 @@ import {
   buildPlayerInsights,
   buildTeamInsights,
 } from "@/lib/analytics/insights";
+import { analysePassOrigins } from "@/lib/analytics/passes";
+import { COURT_ZONES, COURT_ZONE_LABELS, type CourtZone } from "@/lib/analytics/zones";
 import {
   buildPlayerProfiles,
   buildTeamProfile,
@@ -107,6 +111,20 @@ function DashboardContent({ dataset }: { dataset: ShotDataset }) {
   const playerProfiles = useMemo(
     () => buildPlayerProfiles(comparisonShots),
     [comparisonShots],
+  );
+
+  /**
+   * Which shot zone the pass-origin view traces back from.
+   *
+   * Local state rather than the URL: it selects what one view displays, it does
+   * not scope the data every other view is reading. Keeping it out of the query
+   * string preserves the rule that a shared link describes a slice of shots.
+   */
+  const [passOriginZone, setPassOriginZone] = useState<CourtZone>("corner_3");
+
+  const passOrigins = useMemo(
+    () => analysePassOrigins(filtered, passOriginZone),
+    [filtered, passOriginZone],
   );
 
   /**
@@ -249,6 +267,54 @@ function DashboardContent({ dataset }: { dataset: ShotDataset }) {
                   <CourtLegend referenceLabel={referenceLabel} />
                 </div>
                 <ZoneTable zones={zones} referenceLabel={referenceLabel} />
+              </div>
+            </Card>
+          </ViewErrorBoundary>
+
+          <ViewErrorBoundary name="Pass origins">
+            <Card
+              title="Where the good ones are created"
+              description={
+                <>
+                  The court read backwards: each hex is a{" "}
+                  <em>passer&apos;s</em> position, sized by how many of these shots
+                  it created and coloured by what they were worth. Because the shot
+                  zone is held fixed, the difference is attributable to how the shot
+                  was created rather than where it was taken.
+                </>
+              }
+              actions={
+                <label className="flex items-center gap-2 text-xs text-ink-secondary">
+                  <span className="text-ink-muted">Trace back from</span>
+                  <select
+                    value={passOriginZone}
+                    onChange={(event) =>
+                      setPassOriginZone(event.target.value as CourtZone)
+                    }
+                    className="rounded border border-hairline bg-surface px-2 py-1 text-xs text-ink focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-accent"
+                  >
+                    {COURT_ZONES.map((zone) => (
+                      <option key={zone} value={zone}>
+                        {COURT_ZONE_LABELS[zone]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              }
+            >
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,23rem)_minmax(0,1fr)] xl:items-start">
+                <div className="mx-auto w-full max-w-xl space-y-4">
+                  <PassOriginMap analysis={passOrigins} />
+                  <CourtLegend
+                    referenceLabel="this zone's rate"
+                    sizeLabel="Passes"
+                    note="Colour comes from the passing region, not the individual hex."
+                  />
+                </div>
+                <PassOriginTable
+                  analysis={passOrigins}
+                  zoneLabel={COURT_ZONE_LABELS[passOriginZone].toLowerCase()}
+                />
               </div>
             </Card>
           </ViewErrorBoundary>

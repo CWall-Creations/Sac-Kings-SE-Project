@@ -1,6 +1,7 @@
 import type { Shot } from "@/lib/data/types";
 import { buildContextBreakdowns } from "./breakdowns";
 import { summarise } from "./metrics";
+import { analysePassOrigins, bestOrigin, worstOrigin } from "./passes";
 import {
   type PlayerShotProfile,
   buildTeamProfile,
@@ -61,6 +62,9 @@ const REPLACEABLE_ZONES: CourtZone[] = ["midrange_short", "midrange_long"];
 
 /** Below this many attempts, a projected reallocation is not worth stating. */
 const MIN_ATTEMPTS_TO_PROJECT = 40;
+
+/** Below this, a pass origin is too thin to name as better or worse. */
+const MIN_ATTEMPTS_TO_NAME_ORIGIN = 50;
 
 // ---------------------------------------------------------------------------
 // Team
@@ -190,6 +194,28 @@ export function buildTeamInsights(
         .join(" and ")} ${lateHeavy.length === 1 ? "takes" : "take"} them far more often than the team average of ${pct(teamLate)}.`,
       detail: `Shots with under seven seconds left return ${dec(lateClockPps(shots))}. ${lateHeavy.length === 1 ? "Part of that player's" : "Part of these players'"} shot quality is a usage decision rather than a choice they made.`,
       points: null,
+    });
+  }
+
+  // --- How the best shots get created ---------------------------------------
+  const cornerPasses = analysePassOrigins(shots, "corner_3");
+  const bestFeed = bestOrigin(cornerPasses, MIN_ATTEMPTS_TO_NAME_ORIGIN);
+  const worstFeed = worstOrigin(cornerPasses, MIN_ATTEMPTS_TO_NAME_ORIGIN);
+
+  if (
+    bestFeed &&
+    worstFeed &&
+    bestFeed.origin !== worstFeed.origin &&
+    bestFeed.split.pointsPerShot - worstFeed.split.pointsPerShot > 0.15
+  ) {
+    const gap = bestFeed.split.pointsPerShot - worstFeed.split.pointsPerShot;
+
+    insights.push({
+      id: "team-pass-origin",
+      kind: "opportunity",
+      headline: `Corner threes fed from the ${bestFeed.label.toLowerCase()} return ${dec(bestFeed.split.pointsPerShot)}; the same shot fed from the ${worstFeed.label.toLowerCase()} returns ${dec(worstFeed.split.pointsPerShot)}.`,
+      detail: `Same shot, different creation — a gap of ${dec(gap)} per attempt, on ${fmt(bestFeed.split.attempts)} and ${fmt(worstFeed.split.attempts)} attempts respectively. The points figure assumes the ${fmt(worstFeed.split.attempts)} worse-fed attempts could instead be generated the better way, which is a coaching question rather than a given. This says how to create the shot the team already under-takes, not merely that it should take more of them. The extract carries no passer identity, so this is pass geometry, not a player-to-player network.`,
+      points: gap * worstFeed.split.attempts,
     });
   }
 

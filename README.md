@@ -30,7 +30,7 @@ setup step. Node 20+ (developed on 22).
 |---|---|
 | `npm run dev` | Regenerate data, then start the dev server |
 | `npm run build` | Regenerate data, then build (fully static output) |
-| `npm test` | 175 unit and integration tests |
+| `npm test` | 193 unit and integration tests |
 | `npm run data` | Run the ETL only: `data/raw/shots.csv` → `public/data/shots.json` |
 | `npm run lint` | ESLint |
 
@@ -102,7 +102,44 @@ per-situation rather than a single season number:
 
 ![Context with a player selected](docs/screenshots/05-context-player.jpg)
 
-### 4. What to do about it
+### 4. Where the good shots are created
+
+![Pass origins](docs/screenshots/08-pass-origins.jpg)
+
+The court read backwards: each hex is a **passer's** position, sized by how many of
+the selected shots it created and coloured by what those shots were worth. Pick the
+shot zone to trace back from; the default is the corner three.
+
+**This is not an assist network, and cannot be.** The extract carries `passer_x`
+and `passer_y` but no passer *identity*, so who passed to whom is unrecoverable.
+Attributing passes to players by matching origins against each player's operating
+areas was considered and rejected — it would produce a named network that reads as
+fact with no way to validate it.
+
+What *is* recoverable is the geometry, and holding the shot zone fixed controls for
+location, so the difference is attributable to how the shot was created:
+
+| Corner threes, by where the pass came from | Attempts | PPS |
+|---|---|---|
+| Mid-range (the drive/post kick-out band) | 408 | **1.33** |
+| Wing | 135 | 1.22 |
+| Paint | 138 | 1.17 |
+| Top of the key | 76 | **0.99** |
+
+A corner three created by a kick-out from inside the arc is worth **0.34 more per
+attempt** than the same shot swung from the top of the key — and kick-outs create
+half of them. This says *how* to generate the shot the team already under-takes,
+not merely that it should take more of them.
+
+Two more the view surfaces:
+
+- **The paint kick-out helps the corner but hurts the wing** — 1.17 to the corner,
+  0.81 to the wing. Not every kick-out is equal.
+- **A null result, reported anyway:** paint drive-and-kick threes go at 1.10
+  against 1.12 for all other passed threes. The classic action is not producing
+  better threes here.
+
+### 5. What to do about it
 
 ![Team insights](docs/screenshots/06-insights-team.jpg)
 
@@ -169,6 +206,7 @@ Selecting a player does something slightly different in each view, on purpose:
 | Shot map | Filters to them, and switches the colour reference from "an average attempt" to "the team in this zone" |
 | Selection vs making | **Emphasises** them; the others stay for context |
 | Context breakdown | Filters to them and draws the team as a benchmark tick |
+| Where good shots are created | Filters to the passes that fed *his* attempts |
 | What to do about it | Switches from roster-level tactics to that player's role and levers |
 
 The scatter is the exception because filtering a twelve-player comparison down to
@@ -280,7 +318,7 @@ Two readings worth pulling out:
 | Styling | **Tailwind 4** | Design tokens as CSS custom properties; no component library needed at this size |
 | Charts | **Hand-rolled SVG** + `d3-scale` for scales only | No library draws a basketball court, and once the court is hand-built the scatter and bars are cheaper to hand-build than to bend a library into shape |
 | Validation | **Zod** | One schema that defines what "clean" means, enforced at build time |
-| Tests | **Vitest** | 175 tests; the analytics layer is pure functions, so it needs no DOM |
+| Tests | **Vitest** | 193 tests; the analytics layer is pure functions, so it needs no DOM |
 | Data | Build-time ETL → static JSON | See below |
 
 **Deliberately not used:** no state library (the URL is the state), no charting
@@ -297,13 +335,14 @@ src/lib/
   data/       schema.ts, types.ts, enrich.ts, pipeline.ts   parse and validate
   analytics/  court.ts, zones.ts, context.ts, metrics.ts,   the model — pure TS,
               baseline.ts, profiles.ts, breakdowns.ts,       zero React imports
-              hexbin.ts, roles.ts, insights.ts
+              hexbin.ts, roles.ts, insights.ts, passes.ts
   viz/        court-projection.ts, diverging.ts,            presentation helpers
               label-layout.ts, format.ts
   filters.ts, filter-url.ts, hooks/                          filter state
 
 src/components/
-  court/      court-diagram, shot-map, court-legend, zone-table
+  court/      court-diagram, shot-map, court-legend, zone-table,
+              pass-origin-map, pass-origin-table
   charts/     selection-making-scatter, player-table, context-breakdown,
               insights-panel
   filters/, ui/, dashboard.tsx, view-error-boundary.tsx
@@ -378,6 +417,11 @@ player converts them at his demonstrated rate on much higher volume, and that
 defences do not adjust. All three are strong. The assumption is printed next to the
 number rather than buried, and the team-level version is labelled a ceiling rather
 than a forecast.
+
+**Pass origins are geometry, not attribution.** `passer_x`/`passer_y` give a
+position, never an identity, so every claim in the pass-origin view is about where
+a pass came from and never about who threw it. Origin regions use the same court
+geometry as the shot zones so the two cannot drift apart.
 
 **Clutch is time-only.** Period 4+ with under five minutes remaining. Score margin
 is part of the usual definition and is not in this dataset.
@@ -484,7 +528,7 @@ and distance as model features, and a proper hierarchical model rather than
 
 ## Testing
 
-175 tests. The ones that carry weight:
+193 tests. The ones that carry weight:
 
 - **A 2,448-point grid sweep** cross-checking the zone classifier against the
   shot-value predicate — two independent code paths that must agree everywhere.
@@ -507,8 +551,9 @@ Ordered by value per hour:
 
 1. **Free-throw-adjusted efficiency** as a toggle, if free-throw data can be joined.
    The largest single improvement available.
-2. **Assist networks** — the passer coordinates are already parsed and `passDistance`
-   is computed but unused. Who creates whose good shots is a natural next question.
+2. **Passer identity**, if it can be joined from another source. The pass-origin
+   view shows *where* good shots are created; with identities it would show *who*
+   creates them, which is the question a front office actually asks.
 3. **Game-level trend** — 160 game dates are in the data; nothing currently uses time.
    Cold streaks and in-season changes in shot diet are invisible today.
 4. **Lineup and opponent context**, neither of which is in this extract.

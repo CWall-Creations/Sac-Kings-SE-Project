@@ -16,9 +16,17 @@ const BEST_BREAK = DIVERGING_LEGEND[DIVERGING_LEGEND.length - 1].from ?? 0;
 interface CourtLegendProps {
   /** What the colour is measured against, e.g. "team average". */
   referenceLabel: string;
+  /** What the hex size counts. The pass map counts passes, not attempts. */
+  sizeLabel?: string;
+  /** Overrides the note explaining where the colour comes from. */
+  note?: string;
 }
 
-export function CourtLegend({ referenceLabel }: CourtLegendProps) {
+export function CourtLegend({
+  referenceLabel,
+  sizeLabel = "Attempts",
+  note = "Colour comes from the hex's zone, not the hex itself.",
+}: CourtLegendProps) {
   return (
     <div className="flex flex-wrap items-start gap-x-8 gap-y-4 text-xs">
       <div>
@@ -42,12 +50,12 @@ export function CourtLegend({ referenceLabel }: CourtLegendProps) {
           <span>{formatSigned(BEST_BREAK)} or more</span>
         </div>
         <p className="mt-1.5 max-w-56 text-[11px] leading-snug text-ink-muted">
-          Colour comes from the hex&apos;s zone, not the hex itself.
+          {note}
         </p>
       </div>
 
       <div>
-        <p className="mb-1.5 font-medium text-ink-secondary">Attempts</p>
+        <p className="mb-1.5 font-medium text-ink-secondary">{sizeLabel}</p>
         <div className="flex items-end gap-3">
           {[
             { label: "few", scale: 0.3 },
