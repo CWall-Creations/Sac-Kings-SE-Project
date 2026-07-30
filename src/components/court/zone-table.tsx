@@ -45,7 +45,7 @@ export function ZoneTable({ zones, referenceLabel }: ZoneTableProps) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[34rem] border-collapse text-sm">
+      <table className="w-full min-w-[30rem] border-collapse text-sm">
         <caption className="sr-only">
           Shooting by court zone, compared with {referenceLabel}
         </caption>

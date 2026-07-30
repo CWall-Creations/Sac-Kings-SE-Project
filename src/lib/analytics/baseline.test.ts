@@ -142,6 +142,35 @@ describe("buildLeaveOnePlayerOutBaselines", () => {
     expect(looExpectation).toBeLessThan(inSampleExpectation);
   });
 
+  it("falls back to the full sample when removing the player leaves nothing", () => {
+    // The slice a single-player filter produces. Without a floor this yields a
+    // baseline of zero attempts, an expected value of 0, and a difference equal
+    // to the player's entire scoring rate.
+    const shots = makeShotsWithRate(200, 0.45, { ...MIDRANGE, shooterId: "solo" });
+
+    const baseline = buildLeaveOnePlayerOutBaselines(shots).get("solo")!;
+
+    expect(baseline.attempts).toBe(200);
+    expect(baseline.excludesGradedPlayer).toBe(false);
+    expect(baseline.overallPointsPerShot).toBeCloseTo(0.9, 2);
+
+    // And the resulting difference is near zero rather than the whole rate.
+    const expectation = expectedPointsPerShot(shots, baseline);
+    expect(expectation).toBeGreaterThan(0.8);
+    expect(Math.abs(0.9 - expectation)).toBeLessThan(0.05);
+  });
+
+  it("marks a genuine leave-one-out baseline as out-of-sample", () => {
+    const shots = [
+      ...makeShotsWithRate(300, 0.5, { ...MIDRANGE, shooterId: "a" }),
+      ...makeShotsWithRate(300, 0.4, { ...MIDRANGE, shooterId: "b" }),
+    ];
+
+    expect(
+      buildLeaveOnePlayerOutBaselines(shots).get("a")!.excludesGradedPlayer,
+    ).toBe(true);
+  });
+
   it("survives a player who is the only shooter in a cell", () => {
     const shots = [
       ...makeShots(10, { ...RIM, shooterId: "only", contestLevel: "uncontested", made: true }),

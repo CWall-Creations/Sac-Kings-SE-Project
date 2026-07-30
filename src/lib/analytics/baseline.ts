@@ -60,7 +60,28 @@ export interface Baseline {
   readonly overallPointsPerShot: number;
   /** Attempts the baseline was fit on. */
   readonly attempts: number;
+  /**
+   * False when the baseline had to include the player it is used to grade. See
+   * `MIN_BASELINE_ATTEMPTS` — it means the comparison is in-sample and the
+   * difference is understated, which the UI discloses.
+   */
+  readonly excludesGradedPlayer: boolean;
 }
+
+/**
+ * Fewest attempts a leave-one-player-out baseline may be fit on.
+ *
+ * Below this the baseline is not a useful reference — and in the limiting case,
+ * where a filtered slice contains a single shooter, removing them leaves nothing
+ * at all. That case is not hypothetical: it is what "one player plus a narrow
+ * context filter" produces, and without a floor it yields an expected value of
+ * zero and a difference equal to the player's entire scoring rate.
+ *
+ * When the floor is not met the baseline falls back to the full sample. Grading a
+ * player partly against themselves understates their difference, which is a mild
+ * and disclosable distortion; grading them against zero is a broken number.
+ */
+export const MIN_BASELINE_ATTEMPTS = 100;
 
 /**
  * Whether an attempt reflects a shot-selection decision.
@@ -128,28 +149,41 @@ export function buildLeaveOnePlayerOutBaselines(
   const baselines = new Map<string, Baseline>();
 
   for (const [shooterId, playerCells] of perPlayerCells) {
+    const own = perPlayerOverall.get(shooterId)!;
+    const remainingAttempts = overall.attempts - own.attempts;
+
+    // Not enough left to fit on once this player is removed: use the full
+    // sample and mark the comparison as in-sample.
+    if (remainingAttempts < MIN_BASELINE_ATTEMPTS) {
+      baselines.set(shooterId, fromTotals(allCells, overall, false));
+      continue;
+    }
+
     const remainingCells = new Map<BaselineCellKey, Totals>();
 
     for (const [key, totals] of allCells) {
-      const own = playerCells.get(key);
-      const attempts = totals.attempts - (own?.attempts ?? 0);
+      const ownCell = playerCells.get(key);
+      const attempts = totals.attempts - (ownCell?.attempts ?? 0);
       // A cell the player was the only shooter in leaves nothing behind; it
       // falls back to its zone (and then the overall mean) via shrinkage.
       if (attempts > 0) {
         remainingCells.set(key, {
           attempts,
-          points: totals.points - (own?.points ?? 0),
+          points: totals.points - (ownCell?.points ?? 0),
         });
       }
     }
 
-    const own = perPlayerOverall.get(shooterId)!;
     baselines.set(
       shooterId,
-      fromTotals(remainingCells, {
-        attempts: overall.attempts - own.attempts,
-        points: overall.points - own.points,
-      }),
+      fromTotals(
+        remainingCells,
+        {
+          attempts: remainingAttempts,
+          points: overall.points - own.points,
+        },
+        true,
+      ),
     );
   }
 
@@ -214,6 +248,7 @@ function addTo(
 function fromTotals(
   cells: Map<BaselineCellKey, Totals>,
   overall: Totals,
+  excludesGradedPlayer = false,
 ): Baseline {
   const overallPointsPerShot =
     overall.attempts > 0 ? overall.points / overall.attempts : 0;
@@ -264,6 +299,7 @@ function fromTotals(
       expectedPointsPerShotFor(shot.zone, shot.contestLevel),
     overallPointsPerShot,
     attempts: overall.attempts,
+    excludesGradedPlayer,
   };
 }
 

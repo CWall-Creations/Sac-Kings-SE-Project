@@ -43,6 +43,12 @@ export interface PlayerShotProfile {
   isReliable: boolean;
   /** Attempts excluded as unchosen (heaves, backcourt), for transparency. */
   excludedAttempts: number;
+  /**
+   * False when the slice was too thin to fit a baseline without this player, so
+   * they were graded partly against themselves. Understates the difference; the
+   * UI says so rather than presenting it as a clean comparison.
+   */
+  gradedOutOfSample: boolean;
 }
 
 /**
@@ -93,6 +99,7 @@ export function buildPlayerProfiles(
       standardError: pointsPerShotStandardError(chosen),
       isReliable: split.attempts >= MIN_ATTEMPTS_FOR_PLAYER_RATING,
       excludedAttempts: playerShots.length - chosen.length,
+      gradedOutOfSample: baseline.excludesGradedPlayer,
     });
   }
 

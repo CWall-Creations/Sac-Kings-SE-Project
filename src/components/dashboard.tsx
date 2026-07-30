@@ -1,6 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
+import { PlayerTable } from "@/components/charts/player-table";
+import {
+  ScatterSizeLegend,
+  SelectionMakingScatter,
+} from "@/components/charts/selection-making-scatter";
 import { CourtLegend } from "@/components/court/court-legend";
 import { ShotMap } from "@/components/court/shot-map";
 import { ZoneTable } from "@/components/court/zone-table";
@@ -8,6 +13,7 @@ import { FilterBar } from "@/components/filters/filter-bar";
 import { Card, StatTile } from "@/components/ui/card";
 import { ViewErrorBoundary } from "@/components/view-error-boundary";
 import {
+  buildPlayerProfiles,
   buildTeamProfile,
   buildZoneProfiles,
   zonePointsPerShotMap,
@@ -73,6 +79,34 @@ function DashboardContent({ dataset }: { dataset: ShotDataset }) {
   );
 
   const teamProfile = useMemo(() => buildTeamProfile(filtered), [filtered]);
+
+  /**
+   * The comparison view deliberately ignores the player filter.
+   *
+   * Filtering a twelve-player comparison down to one player leaves nothing to
+   * compare, and it would also strip the baseline of the other players it needs to
+   * be a baseline at all. So a player selection *emphasises* here while every other
+   * filter still applies — the reader sees their pick in the context that gives it
+   * meaning.
+   */
+  const comparisonShots = useMemo(
+    () => applyFilters(dataset.shots, { ...filters, playerIds: [] }),
+    [dataset.shots, filters],
+  );
+
+  const playerProfiles = useMemo(
+    () => buildPlayerProfiles(comparisonShots),
+    [comparisonShots],
+  );
+
+  const focusPlayer = useCallback(
+    (shooterId: string) =>
+      updateFilters({
+        // Clicking the already-selected player clears the selection.
+        playerIds: filters.playerIds.includes(shooterId) ? [] : [shooterId],
+      }),
+    [filters.playerIds, updateFilters],
+  );
 
   const referenceLabel = focusedPlayerId ? "team" : "average shot";
 
@@ -145,7 +179,10 @@ function DashboardContent({ dataset }: { dataset: ShotDataset }) {
                 </>
               }
             >
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
+              {/* An even split clipped the table's last column. The court is
+                  capped anyway, so it takes a fixed share and the table gets the
+                  remainder; below xl the two stack. */}
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,23rem)_minmax(0,1fr)] xl:items-start">
                 {/* Capped so the court does not dominate the page when the
                     table wraps below it on narrower screens. */}
                 <div className="mx-auto w-full max-w-xl space-y-4">
@@ -157,6 +194,43 @@ function DashboardContent({ dataset }: { dataset: ShotDataset }) {
                   <CourtLegend referenceLabel={referenceLabel} />
                 </div>
                 <ZoneTable zones={zones} referenceLabel={referenceLabel} />
+              </div>
+            </Card>
+          </ViewErrorBoundary>
+
+          <ViewErrorBoundary name="Selection vs making">
+            <Card
+              title="Good shots, or shots made well?"
+              description={
+                <>
+                  Horizontal position is the average quality of the shots a player
+                  chose; vertical distance from the diagonal is how much better or
+                  worse they shot them. Each player is measured against a baseline
+                  fitted without their own attempts, so nobody is compared to
+                  themselves.
+                  {focusedPlayerName && (
+                    <> {focusedPlayerName} is highlighted; the rest stay for context.</>
+                  )}
+                </>
+              }
+              actions={<ScatterSizeLegend profiles={playerProfiles} />}
+            >
+              {/* Stacked rather than side by side: the table has nine columns
+                  and the scatter wants to stay square, so sharing a row forced
+                  the table's last columns into a horizontal scroll. */}
+              <div className="space-y-7">
+                <div className="mx-auto w-full max-w-2xl">
+                  <SelectionMakingScatter
+                    profiles={playerProfiles}
+                    highlightedIds={filters.playerIds}
+                    onSelect={focusPlayer}
+                  />
+                </div>
+                <PlayerTable
+                  profiles={playerProfiles}
+                  highlightedIds={filters.playerIds}
+                  onSelect={focusPlayer}
+                />
               </div>
             </Card>
           </ViewErrorBoundary>

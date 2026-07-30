@@ -1,7 +1,12 @@
 "use client";
 
 import { scaleSqrt } from "d3-scale";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import {
+  FloatingTooltip,
+  TooltipRow,
+  useTooltipPointer,
+} from "@/components/ui/floating-tooltip";
 import {
   DEFAULT_HEX_RADIUS_FEET,
   type ShotHex,
@@ -59,8 +64,7 @@ interface ShotMapProps {
 }
 
 export function ShotMap({ shots, zones, referenceLabel }: ShotMapProps) {
-  const [hovered, setHovered] = useState<ShotHex | null>(null);
-  const [pointer, setPointer] = useState({ x: 0, y: 0 });
+  const tooltip = useTooltipPointer<ShotHex>();
 
   const differenceByZone = useMemo(() => {
     const map = new Map<CourtZone, number>();
@@ -138,11 +142,9 @@ export function ShotMap({ shots, zones, referenceLabel }: ShotMapProps) {
                   d={hexPath(DEFAULT_HEX_RADIUS_FEET)}
                   fill="transparent"
                   stroke="none"
-                  onMouseEnter={() => setHovered(hex)}
-                  onMouseMove={(event) =>
-                    setPointer({ x: event.clientX, y: event.clientY })
-                  }
-                  onMouseLeave={() => setHovered(null)}
+                  onMouseEnter={(event) => tooltip.show(hex, event)}
+                  onMouseMove={tooltip.move}
+                  onMouseLeave={tooltip.hide}
                 />
               </g>
             );
@@ -158,62 +160,47 @@ export function ShotMap({ shots, zones, referenceLabel }: ShotMapProps) {
         </p>
       )}
 
-      {hovered && (
-        <HexTooltip
-          hex={hovered}
-          zone={zoneByName.get(hovered.zone)}
-          pointer={pointer}
-        />
+      {tooltip.target && (
+        <FloatingTooltip pointer={tooltip.pointer}>
+          <HexTooltipContent
+            hex={tooltip.target}
+            zone={zoneByName.get(tooltip.target.zone)}
+          />
+        </FloatingTooltip>
       )}
     </div>
   );
 }
 
-function HexTooltip({
+function HexTooltipContent({
   hex,
   zone,
-  pointer,
 }: {
   hex: ShotHex;
   zone: ZoneProfile | undefined;
-  pointer: { x: number; y: number };
 }) {
   return (
-    <div
-      className="pointer-events-none fixed z-50 rounded-md border border-hairline bg-surface px-3 py-2 text-xs shadow-lg"
-      style={{
-        left: Math.min(pointer.x + 14, window.innerWidth - 220),
-        top: Math.max(pointer.y - 12, 8),
-      }}
-      role="tooltip"
-    >
+    <>
       <div className="font-medium text-ink">{COURT_ZONE_LABELS[hex.zone]}</div>
       <dl className="mt-1 space-y-0.5 text-ink-secondary">
-        <Row label="This spot">
+        <TooltipRow label="This spot">
           {formatCount(hex.attempts)} att · {hex.makes} made
-        </Row>
+        </TooltipRow>
         {zone && zone.split.attempts > 0 && (
           <>
-            <Row label="Zone FG%">{formatShootingPct(zone.split.fieldGoalPct)}</Row>
-            <Row label="Zone PPS">
+            <TooltipRow label="Zone FG%">
+              {formatShootingPct(zone.split.fieldGoalPct)}
+            </TooltipRow>
+            <TooltipRow label="Zone PPS">
               {formatPointsPerShot(zone.split.pointsPerShot)}
-            </Row>
-            <Row label="vs reference">
+            </TooltipRow>
+            <TooltipRow label="vs reference">
               {formatSigned(zone.pointsPerShotVsReference)}
-            </Row>
+            </TooltipRow>
           </>
         )}
       </dl>
-    </div>
-  );
-}
-
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex gap-3 whitespace-nowrap">
-      <dt className="text-ink-muted">{label}</dt>
-      <dd className="tabular ml-auto text-ink">{children}</dd>
-    </div>
+    </>
   );
 }
 
