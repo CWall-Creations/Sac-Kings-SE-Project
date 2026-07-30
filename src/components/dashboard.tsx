@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
+import { ContextBreakdownGrid } from "@/components/charts/context-breakdown";
 import { PlayerTable } from "@/components/charts/player-table";
 import {
   ScatterSizeLegend,
@@ -12,6 +13,10 @@ import { ZoneTable } from "@/components/court/zone-table";
 import { FilterBar } from "@/components/filters/filter-bar";
 import { Card, StatTile } from "@/components/ui/card";
 import { ViewErrorBoundary } from "@/components/view-error-boundary";
+import {
+  buildContextBreakdowns,
+  maxPointsPerShot,
+} from "@/lib/analytics/breakdowns";
 import {
   buildPlayerProfiles,
   buildTeamProfile,
@@ -97,6 +102,25 @@ function DashboardContent({ dataset }: { dataset: ShotDataset }) {
   const playerProfiles = useMemo(
     () => buildPlayerProfiles(comparisonShots),
     [comparisonShots],
+  );
+
+  /**
+   * The team acts as the reference only when a single player is in focus.
+   * Without a selection the slice already is the team, and drawing a benchmark
+   * on top of every bar would say nothing.
+   */
+  const contextBreakdowns = useMemo(
+    () =>
+      buildContextBreakdowns(
+        filtered,
+        focusedPlayerId ? comparisonShots : null,
+      ),
+    [filtered, focusedPlayerId, comparisonShots],
+  );
+
+  const contextScaleMax = useMemo(
+    () => maxPointsPerShot(contextBreakdowns),
+    [contextBreakdowns],
   );
 
   const focusPlayer = useCallback(
@@ -232,6 +256,28 @@ function DashboardContent({ dataset }: { dataset: ShotDataset }) {
                   onSelect={focusPlayer}
                 />
               </div>
+            </Card>
+          </ViewErrorBoundary>
+
+          <ViewErrorBoundary name="Context breakdown">
+            <Card
+              title="What the situation costs"
+              description={
+                <>
+                  The same attempts split by the circumstances they were taken in.
+                  Buckets stay in their natural order so the shape of each trend is
+                  the finding, and every panel shares one scale.
+                  {focusedPlayerName && (
+                    <> Bars are {focusedPlayerName}; the tick marks the team.</>
+                  )}
+                </>
+              }
+            >
+              <ContextBreakdownGrid
+                breakdowns={contextBreakdowns}
+                scaleMax={contextScaleMax}
+                referenceLabel={focusedPlayerName ? "Team" : null}
+              />
             </Card>
           </ViewErrorBoundary>
         </>

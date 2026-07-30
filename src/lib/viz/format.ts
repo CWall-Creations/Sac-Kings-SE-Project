@@ -24,6 +24,16 @@ export function formatPercent(value: number, decimals = 1): string {
 }
 
 /**
+ * A share of a total, e.g. "27%" — but "<1%" for anything present yet too small
+ * to round to a whole percent. A bucket holding one of a thousand attempts
+ * reading as "0%" looks like it holds none.
+ */
+export function formatShare(value: number): string {
+  if (value > 0 && value < 0.005) return "<1%";
+  return formatPercent(value, 0);
+}
+
+/**
  * A basketball percentage written the way box scores write it, e.g. ".446".
  * Used for FG%/eFG% columns where the leading zero is noise.
  */
