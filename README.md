@@ -88,7 +88,7 @@ difference. Sorting by the raw difference instead drops the 32-attempt player to
 last place — which makes the case for shrinkage visible in one click instead of
 asking the reader to trust a footnote.
 
-### 3. What the situation costs
+### 3. How the circumstances the shot was taken in affect the efficiency of the shot
 
 ![Context breakdown](docs/screenshots/04-context.jpg)
 

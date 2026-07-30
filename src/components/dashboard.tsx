@@ -358,7 +358,7 @@ function DashboardContent({ dataset }: { dataset: ShotDataset }) {
 
           <ViewErrorBoundary name="Context breakdown">
             <Card
-              title="What the situation costs"
+              title="How the circumstances the shot was taken in affect the efficiency of the shot"
               description={
                 <>
                   The same attempts split by the circumstances they were taken in.
