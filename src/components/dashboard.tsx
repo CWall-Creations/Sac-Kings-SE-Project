@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import { ContextBreakdownGrid } from "@/components/charts/context-breakdown";
+import { InsightList, RoleBadge } from "@/components/charts/insights-panel";
 import { PlayerTable } from "@/components/charts/player-table";
 import {
   ScatterSizeLegend,
@@ -17,6 +18,10 @@ import {
   buildContextBreakdowns,
   maxPointsPerShot,
 } from "@/lib/analytics/breakdowns";
+import {
+  buildPlayerInsights,
+  buildTeamInsights,
+} from "@/lib/analytics/insights";
 import {
   buildPlayerProfiles,
   buildTeamProfile,
@@ -122,6 +127,32 @@ function DashboardContent({ dataset }: { dataset: ShotDataset }) {
     () => maxPointsPerShot(contextBreakdowns),
     [contextBreakdowns],
   );
+
+  /**
+   * Insights follow the same rule as the scatter: a player selection narrows the
+   * subject but the comparison set stays the whole roster, because "below the
+   * roster average" is meaningless if the roster has been filtered away.
+   */
+  const insights = useMemo(() => {
+    if (!focusedPlayerId) {
+      return {
+        role: null,
+        items: buildTeamInsights(comparisonShots, playerProfiles),
+      };
+    }
+
+    const profile = playerProfiles.find(
+      (candidate) => candidate.shooterId === focusedPlayerId,
+    );
+    if (!profile) return { role: null, items: [] };
+
+    const result = buildPlayerInsights(
+      profile,
+      comparisonShots.filter((shot) => shot.shooterId === focusedPlayerId),
+      { teamShots: comparisonShots, teamProfiles: playerProfiles },
+    );
+    return { role: result.role, items: result.insights };
+  }, [focusedPlayerId, comparisonShots, playerProfiles]);
 
   const focusPlayer = useCallback(
     (shooterId: string) =>
@@ -278,6 +309,36 @@ function DashboardContent({ dataset }: { dataset: ShotDataset }) {
                 scaleMax={contextScaleMax}
                 referenceLabel={focusedPlayerName ? "Team" : null}
               />
+            </Card>
+          </ViewErrorBoundary>
+
+          <ViewErrorBoundary name="What to do about it">
+            <Card
+              title={
+                focusedPlayerName
+                  ? `${focusedPlayerName} — how he could better serve the offence`
+                  : "What to do about it"
+              }
+              description={
+                focusedPlayerName ? (
+                  <>
+                    Read against his inferred role, because the same shot means
+                    different things for different jobs. Every projection names the
+                    assumption it rests on.
+                  </>
+                ) : (
+                  <>
+                    Tactical and roster-level conclusions, ordered by the points at
+                    stake. These recompute from whatever is filtered above, so they
+                    always describe the slice on screen.
+                  </>
+                )
+              }
+            >
+              <div className="space-y-5">
+                {insights.role && <RoleBadge role={insights.role} />}
+                <InsightList insights={insights.items} />
+              </div>
             </Card>
           </ViewErrorBoundary>
         </>
