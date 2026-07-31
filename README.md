@@ -1,18 +1,9 @@
 # Shot Profile Dashboard
 
-A shot profile dashboard for twelve anonymised NBA players from the 2024–25 regular
-season, treated as one team. 8,816 attempts, 2024-10-22 to 2025-04-13.
+Here is the question I tried to answer based on the option of questions given in the prompt.
 
-The brief offers five possible questions. This dashboard answers one of them
-properly rather than all of them thinly:
-
-> **Which shots are efficient or inefficient — and when a shot underperforms, is it
-> because it was a bad shot, or because it was missed?**
-
-That framing is the spine of the whole app. Every view separates **shot selection**
-(the quality of the attempts a player generates) from **shot making** (whether they
-convert them), because a single efficiency number silently averages the two
-together and a coach can only act on them separately.
+> **Is the team's efficiency gap a shot selection problem or a shot making problem? Determine which is true for each player, and give 
+> them insights/recommendations based off the data we collected. **
 
 ---
 
@@ -23,17 +14,6 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
-`npm run dev` regenerates the dataset before starting, so there is no separate
-setup step. Node 20+ (developed on 22).
-
-| Script | What it does |
-|---|---|
-| `npm run dev` | Regenerate data, then start the dev server |
-| `npm run build` | Regenerate data, then build (fully static output) |
-| `npm test` | 189 unit and integration tests |
-| `npm run data` | Run the ETL only: `data/raw/shots.csv` → `public/data/shots.json` |
-| `npm run lint` | ESLint |
-
 ### Deploying
 
 `npm run build` produces a fully static site (`○ /` prerendered), so it deploys to
@@ -43,7 +23,7 @@ environment variables or server runtime to configure.
 
 ---
 
-## What it shows
+## Dashboard Features
 
 ### 1. Checking where shots are coming from and what they are worth
 
@@ -71,38 +51,7 @@ Measured on this dataset, at a 3 ft hex radius:
 The bottom row is an ordinary UI state. Four trustworthy cells out of sixty-one is
 not a chart.
 
-### 2. How can we decipher if these shot attempts are high-quality looks or just very skilled, tough buckets?
-
-![Selection vs making](docs/screenshots/03-selection-vs-making.jpg)
-
-Expected points per shot on x, actual on y, with the diagonal as "converted at the
-expected rate". Horizontal position answers *are these good shots?*; distance from
-the diagonal answers *does the player make them?*
-
-Each player is graded against a baseline fitted **without their own attempts**.
-Without that, the highest-volume shooter is partly compared to themselves, which
-flattens exactly the differences the view exists to show.
-
-The table below it is sortable, and the default sort is the sample-size-adjusted
-difference. Sorting by the raw difference instead drops the 32-attempt player to
-last place — which makes the case for shrinkage visible in one click instead of
-asking the reader to trust a footnote.
-
-### 3. How the circumstances the shot was taken in affect the efficiency of the shot
-
-![Context breakdown](docs/screenshots/04-context.jpg)
-
-The same attempts split by defensive pressure, shot clock, dribbles before the
-shot, and shot type. Buckets stay in their natural order — never sorted by value —
-because the question is whether the trend is monotonic, and sorting by efficiency
-would answer it before the reader looks. All four decline monotonically here.
-
-Selecting a player draws the team as a tick per bucket, so the comparison is
-per-situation rather than a single season number:
-
-![Context with a player selected](docs/screenshots/05-context-player.jpg)
-
-### 4. How is the last pass before the shot affecting shot quality?
+### 2. How is the last pass before the shot affecting shot quality?
 
 ![Pass origins](docs/screenshots/08-pass-origins.jpg)
 
@@ -139,6 +88,38 @@ Two more the view surfaces:
   against 1.12 for all other passed threes. The classic action is not producing
   better threes here.
 
+### 3. How can we decipher if these shot attempts are high-quality looks or just very skilled, tough buckets?
+
+![Selection vs making](docs/screenshots/03-selection-vs-making.jpg)
+
+Expected points per shot on x, actual on y, with the diagonal as "converted at the
+expected rate". Horizontal position answers *are these good shots?*; distance from
+the diagonal answers *does the player make them?*
+
+Each player is graded against a baseline fitted **without their own attempts**.
+Without that, the highest-volume shooter is partly compared to themselves, which
+flattens exactly the differences the view exists to show.
+
+The table below it is sortable, and the default sort is the sample-size-adjusted
+difference. Sorting by the raw difference instead drops the 32-attempt player to
+last place — which makes the case for shrinkage visible in one click instead of
+asking the reader to trust a footnote.
+
+
+### 4. How the circumstances the shot was taken in affect the efficiency of the shot
+
+![Context breakdown](docs/screenshots/04-context.jpg)
+
+The same attempts split by defensive pressure, shot clock, dribbles before the
+shot, and shot type. Buckets stay in their natural order — never sorted by value —
+because the question is whether the trend is monotonic, and sorting by efficiency
+would answer it before the reader looks. All four decline monotonically here.
+
+Selecting a player draws the team as a tick per bucket, so the comparison is
+per-situation rather than a single season number:
+
+![Context with a player selected](docs/screenshots/05-context-player.jpg)
+
 ### 5. Insights on how to improve the overall team based on the data collected
 
 ![Team insights](docs/screenshots/06-insights-team.jpg)
@@ -171,17 +152,6 @@ re-derives when the data is filtered.
 | L | Rim finisher / Floor spacer | medium | 43% at the rim *and* 31% from three — genuinely both |
 | K | On-ball creator / Floor spacer | medium | creates off the dribble *and* spots up |
 
-The classifier is **auditable rather than overridable**: the signals that drove
-each call are shown next to the label, and a close margin is reported as a hybrid
-instead of being forced into a bucket. An override file would have meant correcting
-the inference using the same numbers the inference already used, which is circular —
-and would have imported assumptions the data cannot support.
-
-Role matters because the same observation means opposite things depending on the
-job. Half of Player C's attempts come from inside ten feet and that is his role;
-half of a guard's attempts from there is a bail-out. So the mid-range reallocation
-rule fires for perimeter players and stays silent for finishers.
-
 Bullets are typed, and the types carry meaning:
 
 - **Costing points** / **Opportunity** — things the player or team controls
@@ -201,112 +171,9 @@ shareable link and the back button steps through changes.
 
 Selecting a player does something slightly different in each view, on purpose:
 
-| View | Effect of selecting a player |
-|---|---|
-| Shot map | Filters to them, and switches the colour reference from "an average attempt" to "the team in this zone" |
-| Selection vs making | **Emphasises** them; the others stay for context |
-| Context breakdown | Filters to them and draws the team as a benchmark tick |
-| Effect of the last pass | Filters to the passes that fed *his* attempts |
-| Insights | Switches from roster-level tactics to that player's role and levers |
-
 The scatter is the exception because filtering a twelve-player comparison down to
 one player leaves nothing to compare — and would strip the baseline of the players
 it needs to be a baseline at all.
-
----
-
-## What the data says
-
-Verified numbers, reproducible from `npm test`.
-
-**Team:** 1.041 points per shot, .446 FG%, .520 eFG%, 40.1% of attempts from three.
-
-### The headline
-
-| Zone | Attempts | Share | FG% | PPS |
-|---|---|---|---|---|
-| Restricted area | 2,241 | 25.4% | .626 | **1.25** |
-| Corner 3 | 839 | 9.5% | .417 | **1.25** |
-| Above the break 3 | 1,342 | 15.2% | .371 | 1.11 |
-| Wing 3 | 1,355 | 15.4% | .345 | 1.04 |
-| Close range (4–10 ft) | 1,813 | 20.6% | .410 | **0.82** |
-| Mid-range (16+ ft) | 507 | 5.8% | .387 | **0.77** |
-| Mid-range (10–16 ft) | 719 | 8.2% | .378 | **0.76** |
-
-**34.5% of this team's attempts (3,039 shots) come from zones worth materially less
-than an average attempt, costing roughly 741 points against their own average.**
-Meanwhile the corner three is worth exactly as much as a shot at the rim — 1.25 —
-and makes up 9.5% of the diet.
-
-### Context
-
-Every situational dimension declines monotonically:
-
-| Dimension | Best → worst |
-|---|---|
-| Defensive pressure | 1.48 → 1.18 → **0.92** (and 64% of all attempts are heavily contested) |
-| Shot clock | 1.16 → 1.05 → 0.90 → 0.89 |
-| Dribbles before | **1.18** (0 dribbles) → 0.98 → 0.91 → **0.83** (7+) |
-
-Catch-and-shoot is worth 0.35 more points per shot than a seven-plus-dribble
-attempt. That is a roster-construction argument, not just a per-player one.
-
-### Players
-
-| Player | Att | 3PA% | Expected | Actual | Raw diff | Adjusted | Points |
-|---|---|---|---|---|---|---|---|
-| Player C | 1,030 | 0% | 0.97 | 1.15 | +0.18 | **+0.17** | **+186** |
-| Player I | 1,037 | 42% | 0.98 | 1.05 | +0.07 | +0.07 | +72 |
-| Player E | 1,385 | 29% | 1.00 | 1.05 | +0.05 | +0.05 | +66 |
-| Player L | 594 | 31% | 1.10 | 1.02 | −0.08 | −0.07 | −48 |
-| Player J | 32 | 59% | 1.05 | 0.81 | −0.24 | **−0.09** | −8 |
-| Player D | 1,013 | 51% | 1.00 | 0.88 | −0.12 | **−0.12** | **−126** |
-
-### Selection or making?
-
-**At player level the decomposition is clean and additive.** Selection is the
-player's expected points per shot against the roster's attempt-weighted average
-(1.03); making is actual minus expected. They sum to his total distance from the
-roster mean, and the two frequently pull in opposite directions:
-
-| Player | Selection | Making | Verdict |
-|---|---|---|---|
-| C | −0.06 (−62) | **+0.18 (+186)** | Overcomes a below-average shot diet with elite conversion |
-| B | **+0.10 (+39)** | −0.02 (−8) | Carried by selection; conversion a slight drag |
-| L | **+0.07 (+43)** | **−0.08 (−48)** | Takes good shots and misses them — a pure making problem |
-| D | −0.03 (−26) | **−0.12 (−126)** | Below on both, but 83% of the shortfall is making |
-
-Player L and Player D are both net-negative and need opposite interventions.
-
-**At team level the same decomposition cannot answer the question, and that is
-worth saying plainly.** Selection effects sum to exactly zero by construction —
-they are measured against the team's own mean — and making effects sum to +115
-points across 8,816 attempts, which is 0.013 per shot, i.e. noise. Because the
-baseline is fitted from these twelve players, *the team cannot be above or below
-itself.*
-
-So the honest team-level answer is:
-
-- **Selection: a measurable, real problem.** 3,039 attempts (34.5%) from zones
-  worth materially less than average, roughly 741 points below their own baseline.
-- **Making: not determinable from this data.** It needs a league-wide reference
-  this extract does not contain.
-- **What is measurable within the roster:** a 0.29 points-per-shot spread between
-  the best and worst shot-maker.
-
-Two readings worth pulling out:
-
-- **Player C takes the lowest-quality shots on the roster (0.97) and is by far its
-  most efficient scorer (1.15).** 73% of his attempts are heavily contested and 50%
-  come at the rim: the model rates his shots as hard because they are, and he makes
-  them anyway. He is not someone to move off his diet.
-- **Player D is the mirror image at comparable volume**: average shot quality,
-  well below-average conversion, −126 points. The problem is making, not selection —
-  a different intervention entirely from Player L, who takes good shots (1.10) and
-  misses them.
-- **Player J is the reason shrinkage exists.** Raw, he is the worst shooter on the
-  team by a distance; his standard error is ±0.22, wider than the entire spread of
-  everyone else. Adjusted, he is unremarkable.
 
 ---
 
@@ -324,46 +191,6 @@ Two readings worth pulling out:
 **Deliberately not used:** no state library (the URL is the state), no charting
 library, no component library, no API layer, no database. Each was considered; each
 would have added surface without answering the question better.
-
-### Project structure
-
-```
-data/raw/shots.csv            The provided extract, committed so the build is reproducible
-scripts/build-data.ts         ETL: validate → enrich → emit public/data/shots.json
-
-src/lib/
-  data/       schema.ts, types.ts, enrich.ts, pipeline.ts   parse and validate
-  analytics/  court.ts, zones.ts, context.ts, metrics.ts,   the model — pure TS,
-              baseline.ts, profiles.ts, breakdowns.ts,       zero React imports
-              hexbin.ts, roles.ts, insights.ts, passes.ts
-  viz/        court-projection.ts, diverging.ts,            presentation helpers
-              label-layout.ts, format.ts
-  filters.ts, filter-url.ts, hooks/                          filter state
-
-src/components/
-  court/      court-diagram, shot-map, court-legend, zone-table,
-              pass-origin-map, pass-origin-table
-  charts/     selection-making-scatter, player-table, context-breakdown,
-              insights-panel
-  filters/, ui/, dashboard.tsx, view-error-boundary.tsx
-```
-
-The important boundary is `src/lib/analytics/` — it imports no React and knows
-nothing about rendering. That is what makes it unit-testable, what would let it run
-server-side unchanged, and what keeps the statistics reviewable separately from the
-UI.
-
-### Data flow
-
-`shots.csv` → **Zod validation** (fails the build with line numbers) → **enrichment**
-(distance, zone, side, shot value, situational buckets — computed once, not on
-every filter change) → `public/data/shots.json` → fetched once by the client →
-filtered and aggregated in-browser with `useMemo`.
-
-Writing to `public/` rather than importing the JSON keeps 5.4 MB of rows out of the
-JavaScript bundle; it compresses to ~456 KB over the wire and the browser caches it.
-
----
 
 ## Assumptions
 
@@ -492,9 +319,21 @@ all transitive through the ESLint toolchain and Next's build chain (minimatch,
 postcss, sharp). All are build/dev-time only — none ship to the browser in a static
 export — and force-fixing them breaks the toolchain, so they are left in place.
 
+## Future Improvements
+
+1. **Play and possession context** — see [the section below](https://github.com/CWall-Creations/Sac-Kings-SE-Project#the-biggest-thing-missing-why-the-shot-was-taken). The largest single improvement available, and the only one that would change conclusions rather than sharpen them.
+2. **Free-throw-adjusted efficiency as a toggle**, if free-throw data can be joined. The largest improvement available from data of the kind already here.
+3. **Passer identity**, if it can be joined from another source. The pass-origin view shows where the last pass came from; with identities it would show who creates them, which is the question a front office actually asks.
+4. **Game-level trend** — 160 game dates are in the data; nothing currently uses time. Cold streaks and in-season changes in shot diet are invisible today.
+5. **Lineup and opponent context**, neither of which is in this extract.
+6. **A defended-shot model** using contest level plus distance, rather than treating contest level as three discrete buckets.
+
+
 ---
 
-## The biggest thing missing: why the shot was taken
+## If the dataset were much larger
+
+### The biggest thing missing: why the shot was taken
 
 Everything in this dashboard describes **what** a shot was — where it came from, how
 contested it was, how many dribbles preceded it. Nothing in it describes **why the
@@ -583,118 +422,4 @@ It also slots into structure the app already has. The insights layer distinguish
 controls), and that distinction is presently supported by one proxy — late-clock
 share. Play context is what would let that category carry real weight.
 
-### What can be seen today, and why it is not enough
-
-A crude proxy is available from the existing columns. Call a shot **structured** if it
-came off a pass, was released with at most one dribble inside 2.5 seconds, and came
-before the clock got late; call it **improvised** if the shooter took three or more
-dribbles or received no pass, with under seven seconds left:
-
-| | Attempts | Share | PPS | Heavily contested |
-|---|---|---|---|---|
-| Structured proxy | 3,769 | 43% | **1.17** | 50% |
-| Improvised proxy | 767 | 9% | **0.78** | 81% |
-| Everything else | 4,280 | 49% | 0.97 | 73% |
-
-A 0.39 gap, and the per-player ordering is suggestive: Player D has the roster's
-highest improvised share (16%) and its lowest points per shot (0.88), while Players G,
-B and A — the most structured shot diets on the team at 70%, 63% and 60% — all sit at
-or above average.
-
-**This proxy cannot settle the question, and it is important to say why.** It is built
-from dribble counts and shot-clock time — the same fields the efficiency model already
-uses — so it is not independent evidence. Worse, it cannot distinguish the two
-explanations that matter: a player who improvises badly and a player who is handed
-possessions that have already collapsed produce identical rows. Separating them
-requires knowing what the offence was *trying* to do, which is exactly the field this
-dataset lacks.
-
-### Where the data comes from, and what it costs
-
-Play-type and option-rank tagging is available from Synergy Sports and from tracking
-providers such as Second Spectrum, and most staffs already chart their own play calls
-internally. The honest caveats:
-
-- **Option rank is partly subjective.** Coaches disagree about whether a read was the
-  second option or improvisation, so the field carries annotator noise that the
-  location fields do not.
-- **Taxonomies differ by provider**, so play labels are not portable between sources
-  without a mapping layer.
-- **Cells thin out fast.** Conditioning on zone x contest x option rank multiplies the
-  cell count, and this dataset's thinnest cells are already small. The shrinkage
-  already built here stops being a nicety and becomes load-bearing — or the model
-  moves to a properly hierarchical one.
-
-## If the dataset were much larger
-
-The current design holds to roughly 100k shots. Past that, in order:
-
-**1. Move aggregation to the database, not the browser.** The analytics layer is pure
-functions over arrays with no React dependency, so the port is mechanical: every
-function in `src/lib/analytics/` has a direct SQL equivalent (`summariseBy` is
-`GROUP BY`; the baseline is a windowed aggregate). Introduce a `ShotRepository`
-interface with the current static-JSON implementation behind it, add a
-Postgres/DuckDB implementation, and the tests keep passing against both.
-
-**2. Precompute the baseline.** The leave-one-player-out baselines are already
-computed by subtracting each player's cell totals from league totals — one pass, not
-one pass per player. At scale that becomes a materialised table keyed by
-(zone, contest level), refreshed nightly, with leave-one-out still done by
-subtraction.
-
-**3. Stop shipping raw rows.** The court map is the only view needing shot-level
-data, and it only needs *binned* data. Serve pre-binned hexes per filter combination
-and the payload stops growing with the dataset. The other two views only ever
-consume aggregates.
-
-**4. Push filters into the query.** Filter state is already a serialisable object
-(`ShotFilters`) parsed from the URL, so it maps onto query parameters without
-restructuring. The UI would need loading states on filter changes — holding the
-previous render at reduced opacity rather than flashing a skeleton.
-
-**5. Column-oriented storage.** Parquet plus DuckDB-WASM would keep the whole thing
-client-side considerably further, if avoiding a backend mattered more than latency.
-
-At multi-season, multi-team scale the *analysis* would change too, not just the
-plumbing: a real league-wide baseline instead of an in-sample one, defender identity
-and distance as model features, and a proper hierarchical model rather than
-`n / (n + k)` shrinkage.
-
 ---
-
-## Testing
-
-189 tests. The ones that carry weight:
-
-- **A 2,448-point grid sweep** cross-checking the zone classifier against the
-  shot-value predicate — two independent code paths that must agree everywhere.
-- **Leave-one-player-out verified against brute force** to 10 decimal places, since
-  the incremental subtraction is an optimisation that could silently drift.
-- **An integration pass over all 8,816 committed rows**, asserting aggregates that
-  were derived independently (in a throwaway Python script) before the TypeScript
-  existed — so the implementation is checked against an outside answer, not itself.
-- **Hex assignment verified against a brute-force nearest-centre search.**
-- **The single-shooter baseline fallback**, which is a bug this suite caught: a slice
-  containing one player left the leave-one-out baseline with zero attempts, yielding
-  an expected value of 0.000 and a difference equal to the player's entire scoring
-  rate.
-
----
-
-## Future work
-
-Ordered by value per hour:
-
-1. **Play and possession context** — see [the section above](#the-biggest-thing-missing-why-the-shot-was-taken).
-   The largest single improvement available, and the only one that would change
-   conclusions rather than sharpen them.
-2. **Free-throw-adjusted efficiency** as a toggle, if free-throw data can be joined.
-   The largest improvement available from data of the kind already here.
-3. **Passer identity**, if it can be joined from another source. The pass-origin
-   view shows *where* the last pass came from; with identities it would show *who*
-   creates them, which is the question a front office actually asks.
-4. **Game-level trend** — 160 game dates are in the data; nothing currently uses time.
-   Cold streaks and in-season changes in shot diet are invisible today.
-5. **Lineup and opponent context**, neither of which is in this extract.
-6. **A defended-shot model** using contest level plus distance, rather than treating
-   contest level as three discrete buckets.
