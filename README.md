@@ -5,6 +5,8 @@ Here is the question I tried to answer based on the option of questions given in
 > **Is the team's efficiency gap a shot selection problem or a shot making problem? Determine which is true for each player, and give 
 > them insights/recommendations based off the data we collected. **
 
+This stems from the 2 original questions in the prompt of What shots are inefficient and efficient? & What tactical or roster-level insights can be derived from the data?
+
 ---
 
 ## Running it locally
@@ -14,12 +16,26 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
-### Deploying
+### Deployed site
 
-`npm run build` produces a fully static site (`○ /` prerendered), so it deploys to
-any static host with no configuration — Vercel, Netlify, or GitHub Pages. On Vercel
-the repo works as-is: the `prebuild` hook regenerates the dataset, and there are no
-environment variables or server runtime to configure.
+https://colin-wallace-kings-project.vercel.app/
+
+---
+
+## Tech stack
+
+| Layer | Choice | Why |
+|---|---|---|
+| Framework | **Next.js 16** (App Router), React 19, TypeScript | Static output; the App Router gives a clean client/server split even though this ships as a single static page |
+| Styling | **Tailwind 4** | Design tokens as CSS custom properties; no component library needed at this size |
+| Charts | **Hand-rolled SVG** + `d3-scale` for scales only | No library draws a basketball court, and once the court is hand-built the scatter and bars are cheaper to hand-build than to bend a library into shape |
+| Validation | **Zod** | One schema that defines what "clean" means, enforced at build time |
+| Tests | **Vitest** | 189 tests; the analytics layer is pure functions, so it needs no DOM |
+| Data | Build-time ETL → static JSON | See below |
+
+**Deliberately not used:** no state library (the URL is the state), no charting
+library, no component library, no API layer, no database. Each was considered; each
+would have added surface without answering the question better.
 
 ---
 
@@ -176,21 +192,6 @@ one player leaves nothing to compare — and would strip the baseline of the pla
 it needs to be a baseline at all.
 
 ---
-
-## Tech stack
-
-| Layer | Choice | Why |
-|---|---|---|
-| Framework | **Next.js 16** (App Router), React 19, TypeScript | Static output; the App Router gives a clean client/server split even though this ships as a single static page |
-| Styling | **Tailwind 4** | Design tokens as CSS custom properties; no component library needed at this size |
-| Charts | **Hand-rolled SVG** + `d3-scale` for scales only | No library draws a basketball court, and once the court is hand-built the scatter and bars are cheaper to hand-build than to bend a library into shape |
-| Validation | **Zod** | One schema that defines what "clean" means, enforced at build time |
-| Tests | **Vitest** | 189 tests; the analytics layer is pure functions, so it needs no DOM |
-| Data | Build-time ETL → static JSON | See below |
-
-**Deliberately not used:** no state library (the URL is the state), no charting
-library, no component library, no API layer, no database. Each was considered; each
-would have added surface without answering the question better.
 
 ## Assumptions
 
